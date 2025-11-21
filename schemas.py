@@ -1,48 +1,101 @@
 """
-Database Schemas
+Database Schemas for Study App
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model corresponds to a MongoDB collection. The collection
+name is the lowercase of the class name.
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional, Literal, Dict, Any
+from datetime import datetime
 
-# Example schemas (replace with your own):
 
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    name: str
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    provider: Literal["email", "phone", "google"] = "email"
+    preferred_language: Literal["Hindi", "English", "Hinglish"] = "English"
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
+class Profile(BaseModel):
+    user_id: str
+    grade: Optional[str] = None
+    subjects: List[str] = []
+    study_goal: Optional[Literal["exam", "homework", "preparation"]] = None
+    daily_study_minutes: int = 20
+    badges: List[str] = []
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+
+class ChatMessage(BaseModel):
+    user_id: str
+    role: Literal["user", "assistant"]
+    content: str
+    subject: Optional[str] = None
+    quick_action: Optional[Literal["simplify", "explain10", "flashcards", "quiz"]] = None
+
+
+class Doubt(BaseModel):
+    user_id: str
+    source: Literal["text", "image"] = "text"
+    prompt: Optional[str] = None
+    image_url: Optional[str] = None
+    ocr_text: Optional[str] = None
+    answer: Optional[str] = None
+    clarity: Optional[Literal["good", "unclear"]] = None
+
+
+class FlashcardItem(BaseModel):
+    question: str
+    answer: str
+
+
+class Flashcard(BaseModel):
+    user_id: str
+    subject: Optional[str] = None
+    topic: Optional[str] = None
+    items: List[FlashcardItem]
+
+
+class QuizQuestion(BaseModel):
+    question: str
+    type: Literal["mcq", "short"] = "mcq"
+    options: Optional[List[str]] = None
+    answer: Optional[str] = None
+
+
+class Quiz(BaseModel):
+    user_id: str
+    topic: str
+    questions: List[QuizQuestion]
+    score: Optional[int] = None
+
+
+class StudyTask(BaseModel):
+    date: str
+    subject: Optional[str] = None
+    topic: str
+    minutes: int
+
+
+class StudyPlan(BaseModel):
+    user_id: str
+    exam_date: str
+    daily_minutes: int
+    subjects: List[str]
+    tasks: List[StudyTask]
+
+
+class NoteSummary(BaseModel):
+    user_id: str
+    subject: Optional[str] = None
+    text: str
+    bullets: List[str]
+    explanation: str
+
+
+class SavedItem(BaseModel):
+    user_id: str
+    type: Literal["chat", "flashcards", "quiz", "plan", "doubt", "summary"]
+    ref_id: Optional[str] = None
+    meta: Dict[str, Any] = {}
